@@ -168,7 +168,7 @@ function runGame(){
         npc: null
     }
 
-    const npcs = [bw2GirlSprite, blueNPC, suitNPC]
+    const npcs = [bw2GirlSprite, blueNPC]
     const moveables = [background, ...boundaries, fg, ...npcs, monaLisa]
 function rectangularCollision({ rect1, rect2 }) {
     return (
@@ -320,7 +320,7 @@ let isAnimateRunning = true; // Flag to control the animate loop
         })
         bw2GirlSprite.draw()
         blueNPC.draw()
-        suitNPC.draw()
+   
         monaLisa.draw()
         player.update(deltaTime) // Pass deltaTime to the player
         player.draw()
