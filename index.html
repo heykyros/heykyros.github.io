@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!-- the standard p5 drawing and animation library -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <!-- the standard p5 sound library
+         note: this library will fail if not loaded over
+         a secure connection (https) or on your localhost) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+    <script src="assets/data/collisions.js"></script>
+    <script src="constants.js"></script>
+    <script src="classes.js"></script>
+    <script src="loopType.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="./assets/images/favicon.png" />
+    <title>Pookiemon</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="instructions" style="display:none">
+        <p>Press 'Z' to select and 'X' to go back.</p>
+        <p>
+          Made by
+          <a href="https://github.com/heykyros" target="_blank">Cyrus Khabbaz</a>.
+        </p>
+        <p id="anytostart">Press any key to start</p>
+      </div>
+    </div>
+    <div id="game-container" style="display:flex">
+      <canvas></canvas>
+      <div id="overlay"></div>
+    </div>
+    <script src="index.js" id="indexScript"></script>
+  </body>
+</html>

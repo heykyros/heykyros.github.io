@@ -1,0 +1,86 @@
+@font-face {
+	font-family: "Pokemon Emerald";
+	src: url("./assets/fonts/pokemon-emerald.ttf");
+}
+
+html {
+    margin: 0;
+    height: 100%;
+    padding: 0;
+    background: black;
+    font-family: 'Pokemon Emerald', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+a {
+    color: hotpink;
+}
+
+html, body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#instructions {
+    font-size: 2em;
+    flex: auto;
+    width: 100%;
+    height: 100%;
+    margin-top: 5vh;
+    text-align: center;
+    color: white
+    
+}
+
+#container {
+    width: 100%;
+    height: 100%; /* Occupies the full viewport height */
+    display: flex; /* Changed to flex for better centering */
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
+    position: relative;
+}
+
+#anytostart {
+    margin-top: 7vh;
+    transition: opacity 1s ease-in-out;
+}
+
+#game-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Ensure the canvas inside #game-container is not resized */
+#game-container canvas {
+    display: block; /* Removes extra space below the canvas */
+    /* Do not set width or height here; let the canvas keep its existing size */
+}
+
+/* Style the overlay to match the canvas size */
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Matches the canvas width */
+    height: 100%; /* Matches the canvas height */
+    background-color: black; /* Semi-transparent red for debugging */
+    opacity: 0;
+    pointer-events: none; /* Allows clicks to pass through to the canvas */
+}
+21
+.hidden {
+    opacity: 0;
+}
