@@ -48,7 +48,7 @@ const blueBoi = new Image()
 blueBoi.src="./assets/images/characters/NPCs/blueBoy.png"
 
 const suitDude = new Image()
-suitDude.src="./assets/images/characters/NPCs/suitDude.png"
+suitDude.src="/assets/images/characters/NPCs/suitDude.png"
 
 const painting = new Image()
 painting.src ="./assets/images/Mona Lisa.png"
