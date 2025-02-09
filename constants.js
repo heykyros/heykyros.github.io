@@ -89,3 +89,15 @@ cursor.src = "./assets/images/arrow.png"
 
 const pookiemonInfo = new Image()
 pookiemonInfo.src = "./assets/images/PookiemonInfo.png"
+
+const battleOverlay = new Image()
+battleOverlay.src="./assets/images/graphics/Pictures/Battle/overlay_fight_transformed.png"
+
+const bagImage = new Image()
+bagImage.src="./assets/images/graphics/Pictures/Bag/bg_f.png"
+
+const cursor2 = new Image()
+cursor2.src = "./assets/images/graphics/Pictures/Bag/cursor.png"
+
+const bagIcon = new Image()
+bagIcon.src="./assets/images/graphics/Pictures/Bag/bag_1.png"

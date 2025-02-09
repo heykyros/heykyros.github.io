@@ -1,3 +1,62 @@
+let endGame = false;
+
+
+
+
+let sounds;
+
+
+async function loadAllSounds() {
+    const soundFiles = {
+      levelSound: "assets/sounds/littleroot-town.mp3",
+      battleSound: "assets/sounds/battle-intro.mp3",
+      battleLoop: "assets/sounds/battle-loop.mp3",
+      clickSound: "assets/sounds/click.mp3",
+      getItemSound: "assets/sounds/get-item.mp3",
+      faintSound: "assets/sounds/faint.mp3",
+      pokeballSound: "assets/sounds/exit-ball.mp3",
+      attackSound: "assets/sounds/attack.mp3"
+    };
+  
+    const sounds = {};
+  
+    // Create and load each audio element
+    for (const [key, path] of Object.entries(soundFiles)) {
+      sounds[key] = new Audio(path);
+      // Wait for each sound to load
+      await new Promise((resolve, reject) => {
+        sounds[key].addEventListener('canplaythrough', resolve, { once: true });
+        sounds[key].addEventListener('error', reject);
+        // Start loading the audio
+        sounds[key].load();
+      });
+    }
+  
+    return sounds;
+  }
+
+  // Modified initializeSounds function
+async function initializeSounds() {
+    try {
+      const sounds = await loadAllSounds();
+      // Assign the loaded sounds to your global variables
+      window.levelSound = sounds.levelSound;
+      window.battleSound = sounds.battleSound;
+      window.battleLoop = sounds.battleLoop;
+      window.clickSound = sounds.clickSound;
+      window.getItemSound = sounds.getItemSound;
+      window.faintSound = sounds.faintSound;
+      window.pokeballSound = sounds.pokeballSound;
+      window.attackSound = sounds.attackSound;
+  
+      console.log("All sounds loaded successfully!");
+      return true;
+    } catch (error) {
+      console.error("Error loading sounds:", error);
+      return false;
+    }
+  }
+
 console.log("THE LOOP TYPE IS" + sessionStorage.getItem("loopType"))
 
 function reloadScript() {
@@ -16,8 +75,34 @@ function reloadScript() {
     console.log("index.js reloaded!");
   }
 
+  function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    let words = text.split(' ');
+    let line = '';
+
+    for (let i = 0; i < words.length; i++) {
+        let testLine = line + words[i] + ' ';
+        let metrics = context.measureText(testLine);
+        let testWidth = metrics.width;
+
+        if (testWidth > maxWidth && i > 0) {
+            context.fillText(line, x, y);
+            line = words[i] + ' ';
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    context.fillText(line, x, y);
+}
+
+
+let drainHP = false;
+let lockBagArrow = false;
+
 
 function initializeGameState() {
+
+
     const gameState = {
         battleAnimationTransition: {
             topSlab: { x: 0, y: 0 },
@@ -38,6 +123,11 @@ function initializeGameState() {
             cursorPositions: {
                 current: 1,
                 active: true
+            },
+            battlePositions: {
+                current: 1,
+                active: true,
+                pp: [1, 1, 1, 1]
             },
             lockBattleMenu: false,
             releaseElapsedTime: 0,
@@ -79,7 +169,14 @@ function resetBattleState() {
     // Reset any other necessary variables here
 }
 
-function runGame(){
+let firstMove = false;
+
+async function runGame(){
+
+
+
+    
+    console.log(sounds)
     console.log("Running")
 
     console.log(collisions)
@@ -141,7 +238,15 @@ function runGame(){
     const pookieFlash = new Sprite({image: graceSprite, position: {x: 246, y:200}, scale:0.3})
     const battleComandSprite =  new Sprite ({image: battleCommand, position: {x: 0, y: (canvas.height - 206)}, scale: 0.538})
     const arrow =  new Sprite ({image: cursor, position: {x: 615, y: (canvas.height - 158)}, scale: 0.488})
+    const arrow2 =  new Sprite ({image: cursor, position: {x: 70, y: (canvas.height - 162)}, scale: 0.488})
+    const arrow3 =  new Sprite ({image: cursor2, position: {x: 518, y: (canvas.height - 620)}, scale: 2})
     const graceInfo = new Sprite ({image: pookiemonInfo, position: {x: (canvas.width-(pookiemonInfo.width * 0.92))/2, y:0}, scale: 0.92})
+    const battleMoves = new Sprite({image: battleOverlay, position: {x:0, y: canvas.height - 206}, scale: 0.538})
+    const bag = new Sprite({image: bagImage, position: {x:((canvas.width/2) - (2048/2 * 0.46)), y:(canvas.height/2) - (1536 * 0.23)}, scale:0.46})
+    const bag1 = new Sprite({image:bagIcon, position: {x:120, y:385}, scale:0.75})
+
+
+
     const keys = {
         w: {
             pressed: false
@@ -222,12 +327,12 @@ function writeText(){
     c.shadowOffsetY = 4;
     c.fillStyle = "white";
     c.textAlign = "left";
-    c.textBaseline = "middle";
+    c.textBaseline="top"
     const dialogueBoxHeight = 200;
     const padding = 30;
     const textX = canvas.width / 17
-    const textY = canvas.height - dialogueBoxHeight / 1.65 // Center vertically within the box
-    const maxLineWidth = canvas.width - 2 * padding;
+    const textY = canvas.height - dialogueBoxHeight / 1.38 // Center vertically within the box
+    const maxLineWidth = canvas.width - 2 * 200;
     const words = currentText.split(" ");
     let line = "";
     let lines = [];
@@ -245,7 +350,7 @@ function writeText(){
 
     // Render each line of text
     lines.forEach((line, index) => {
-        c.fillText(line, textX, textY - (lines.length / 2) * 40 + index * 40);
+        c.fillText(line, textX, textY - (lines.length / 2) * 40 + index * 60);
     });
 }
 
@@ -330,6 +435,10 @@ let isAnimateRunning = true; // Flag to control the animate loop
                 
     
                 if (inBattleRange({ player: player, monaLisa: monaLisa })) {
+                    console.log(levelSound)
+                    levelSound.pause()
+               
+
                     console.log(animationID)
                     window.cancelAnimationFrame(animationID) 
                     battle.iniated = true;
@@ -418,10 +527,12 @@ let isAnimateRunning = true; // Flag to control the animate loop
                 
                                 // Start typing the first dialogue
                                 startTypingEffect(activeNPC.npc.dialogue[activeNPC.npc.currentDialogue]);
+                                clickSound.play()
                                 break;
                             }
                         }
                     } else {
+                        clickSound.play()
                         // Move to the next dialogue
                         if (activeNPC.npc.currentDialogue < activeNPC.npc.maxDialogue - 1) {
                             activeNPC.npc.currentDialogue++;
@@ -518,12 +629,16 @@ let isAnimateRunning = true; // Flag to control the animate loop
 
 /* Battle Code Starts Here */
 
-
+async function startBattle(){
+    await initializeSounds()
+    battleSound.play()
+    animateBattle(0)
+}
 
 if(loopType==0){
     animate(0)
 } else {
-    animateBattle(0)
+    startBattle()
 }
 
 
@@ -532,6 +647,19 @@ let cursorPositions = {
     active: true
 }
 
+let battlePositions = {
+    current: 1,
+    active: true,
+    pp: [1, 1, 1, 1]
+}
+
+let bagCursorPositions = {
+    current: 1,
+    text: "You're a master artist, of course you have these."
+}
+
+
+let dialogueCounter = 0;
 
 function animateBattle(currentTime){
     c.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
@@ -541,14 +669,17 @@ function animateBattle(currentTime){
         flashLevel = 0;
         timesWrote = 0;
     }
-    window.requestAnimationFrame(animateBattle)
 
     deltaTime = currentTime - lastTime
     lastTime = currentTime
     elapsedTime+=deltaTime;
-    if(elapsedTime = timeInterval){
+    if(elapsedTime > timeInterval){
         elapsedTime = 0;
     }
+
+    const animateID = window.requestAnimationFrame(animateBattle)
+
+   
 
     //Battle stage 0 = sprite animation stage
     if(battleStage==0){
@@ -598,6 +729,10 @@ function animateBattle(currentTime){
 
         //Battle stage 1 = Releasing Grace
     } else if (battleStage==1){
+        console.log(elapsedTime)
+        if(elapsedTime>820){
+            battleLoop.play();
+        }
         c.reset()
         battleBackground.draw()
         pathPlatform.draw()
@@ -625,6 +760,7 @@ function animateBattle(currentTime){
         releaseLastTime = currentTime
         releaseElapsedTime+=releaseDeltaTime;
         if(graceReleased){
+            pokeballSound.play()
             if(releaseElapsedTime <= 200){
                 c.globalAlpha = flashLevel;
                 pookieFlash.draw()
@@ -920,14 +1056,328 @@ function animateBattle(currentTime){
     c.reset()
     battleBackground.draw()
     graceInfo.draw()
-}
+} else if(battleStage==6){
+    c.reset()
+    battleBackground.draw()
+    pathPlatform.draw()
+    playerPathPlatform.draw()
+    if(playerHPBox.position.x > 550){
+        playerHPBox.position.x -= speedBattle * deltaTime / 1000;
+        hpOverlayPlayer.position.x -= speedBattle * deltaTime / 1000;
+    }
+    playerHPBox.draw()
+    pookie.draw()
+    hpBox.draw()
+    monaLisa2.draw()
 
+    battleMoves.draw()
+    c.drawImage(
+        hpOverlay.image, // The image to draw
+        0, // Source X (start cropping from the left edge)
+        0, // Source Y (start cropping from the top edge)
+        hpOverlay.width, // Source width (use the full width of the image)
+        croppedHeight, // Source height (only the first 1/6th of the image height)
+        hpOverlay.position.x + 201, // Destination X (where to draw on the canvas)
+        hpOverlay.position.y + 68, // Destination Y (where to draw on the canvas)
+        hpOverlay.width * hpOverlay.scale, // Destination width (same as source width to avoid scaling)
+        croppedHeight * hpOverlay.scale // Destination height (same as cropped height to avoid scaling)
+    );
+
+    
+    c.drawImage(
+        hpOverlayPlayer.image, // The image to draw
+        0, // Source X (start cropping from the left edge)
+        0, // Source Y (start cropping from the top edge)
+        hpOverlayPlayer.width, // Source width (use the full width of the image)
+        croppedHeight, // Source height (only the first 1/6th of the image height)
+        hpOverlayPlayer.position.x + 990, // Destination X (where to draw on the canvas)
+        hpOverlayPlayer.position.y + 318, // Destination Y (where to draw on the canvas)
+        hpOverlayPlayer.width * hpOverlayPlayer.scale, // Destination width (same as source width to avoid scaling)
+        croppedHeight * hpOverlayPlayer.scale // Destination height (same as cropped height to avoid scaling)
+    );
+    
+    c.fillStyle = "rgb(78, 78, 78)"
+    c.font = "35px Pokemon Emerald"; // Set font size and style
+    c.fillText("GRACE                             Lv100", playerHPBox.position.x + 60, playerHPBox.position.y + playerHPBox.height/2 - 10)
+
+
+
+    c.fillText("CHOPPED MONA LISA          Lv69", hpBox.position.x + 20, hpBox.position.y + hpBox.height/2 - 10)
+    c.font = "56px Pokemon Emerald"; // Set font size and style
+    arrow2.draw()
+    c.fillStyle = "rgb(59, 59, 59)"
+    c.shadowColor="gray"
+    c.shadowOffsetX = 0.1;
+    c.shadowOffsetY = 0.1;
+    c.fillText("EXAMINE", 110, canvas.height - 120)
+    if(battlePositions.pp[battlePositions.current-1] == 0){
+        c.fillStyle = "red"
+    }
+    c.fillText((battlePositions.pp[battlePositions.current-1] + "/1"), 950, canvas.height - 45)
+    c.fillStyle = "rgb(59, 59, 59)"
+    c.fillText("SHOW CYRUS", 110, canvas.height - 50)
+    c.fillText("TWERK'O LISA", 400, canvas.height - 50)
+    c.fillText("PAINT", 400, canvas.height - 120)
+
+
+    if(keys.d.pressed && (battlePositions.current==1 || battlePositions.current==3)){
+        arrow2.position.x+= 290
+        if(battlePositions.current==1){
+            battlePositions.current=2;
+        } else {
+            battlePositions.current=4;
+        }
+    } 
+    
+    if(keys.s.pressed && (battlePositions.current==1 || battlePositions.current==2)){
+        arrow2.position.y+= 70 
+        if(battlePositions.current==1){
+            battlePositions.current=3;
+        } else {
+            battlePositions.current = 4;
+        }
+    }
+    
+    if(keys.w.pressed && (battlePositions.current==3 || battlePositions.current==4)){
+        arrow2.position.y-=70 
+        if(battlePositions.current==3){
+            battlePositions.current=1;
+        } else {
+            battlePositions.current=2;
+        }
+    }
+    
+    if(keys.a.pressed && (battlePositions.current==2 || battlePositions.current==4)){
+        arrow2.position.x-= 290 
+        if(battlePositions.current==2){
+            battlePositions.current=1;
+        } else {
+            battlePositions.current = 3;
+        }
+    }
+
+} else if(battleStage == 7){
+    if(drainHP && hpOverlay.scale > 0){
+        hpOverlay.scale-=0.01;
+    }
+    c.reset()
+    battleBackground.draw()
+    pathPlatform.draw()
+    playerPathPlatform.draw()
+    if(playerHPBox.position.x > 550){
+        playerHPBox.position.x -= speedBattle * deltaTime / 1000;
+        hpOverlayPlayer.position.x -= speedBattle * deltaTime / 1000;
+    }
+    playerHPBox.draw()
+    pookie.draw()
+    hpBox.draw()
+    monaLisa2.draw()
+
+    battleMoves.draw()
+    c.drawImage(
+        hpOverlay.image, // The image to draw
+        0, // Source X (start cropping from the left edge)
+        0, // Source Y (start cropping from the top edge)
+        hpOverlay.width, // Source width (use the full width of the image)
+        croppedHeight, // Source height (only the first 1/6th of the image height)
+        hpOverlay.position.x + 201, // Destination X (where to draw on the canvas)
+        hpOverlay.position.y + 68, // Destination Y (where to draw on the canvas)
+        hpOverlay.width * hpOverlay.scale, // Destination width (same as source width to avoid scaling)
+        croppedHeight * hpOverlay.scale // Destination height (same as cropped height to avoid scaling)
+    );
+
+    
+    c.drawImage(
+        hpOverlayPlayer.image, // The image to draw
+        0, // Source X (start cropping from the left edge)
+        0, // Source Y (start cropping from the top edge)
+        hpOverlayPlayer.width, // Source width (use the full width of the image)
+        croppedHeight, // Source height (only the first 1/6th of the image height)
+        hpOverlayPlayer.position.x + 990, // Destination X (where to draw on the canvas)
+        hpOverlayPlayer.position.y + 318, // Destination Y (where to draw on the canvas)
+        hpOverlayPlayer.width * hpOverlayPlayer.scale, // Destination width (same as source width to avoid scaling)
+        croppedHeight * hpOverlayPlayer.scale // Destination height (same as cropped height to avoid scaling)
+    );
+    
+    c.fillStyle = "rgb(78, 78, 78)"
+    c.font = "35px Pokemon Emerald"; // Set font size and style
+    c.fillText("GRACE                             Lv100", playerHPBox.position.x + 60, playerHPBox.position.y + playerHPBox.height/2 - 10)
+
+
+
+    c.fillText("CHOPPED MONA LISA          Lv69", hpBox.position.x + 20, hpBox.position.y + hpBox.height/2 - 10)
+    c.font = "56px Pokemon Emerald"; // Set font size and style
+    arrow2.draw()
+    c.fillStyle = "rgb(59, 59, 59)"
+    c.shadowColor="gray"
+    c.shadowOffsetX = 0.1;
+    c.shadowOffsetY = 0.1;
+    battleDialogueBox.draw()
+    writeText()
+} else if(battleStage==8){
+   
+
+    battleBackground.draw()
+    bag.draw()
+    bag1.draw()
+    arrow3.draw()
+    c.fillStyle = "rgb(59, 59, 59)"
+    c.shadowColor="gray"
+    c.shadowOffsetX = 0.1;
+    c.shadowOffsetY = 0.1;
+    c.fillText("ITEMS", 245, 28)
+    c.fillText("Paint Brush            X 2", 554, 70)
+    c.fillText("Old Racket            X 12", 554, 130)
+    c.fillText("Mysterious Fish     X 1", 554, 190)
+    c.fillText("Cheese Burger    X 100", 554, 250)
+    c.fillText("Colored Pencil      X 42", 554, 310)
+    c.fillText("Watercolor Paper   X 5", 554, 370)
+    c.lineWidth = 1;
+    wrapText(c, bagCursorPositions.text, 120, 520, 800, 50)
+
+    if(!keys.s.pressed && !keys.w.pressed){
+        lockBagArrow=false;
+    }
+
+
+    
+
+    if((keys.s.pressed) && !lockBagArrow){
+        clickSound.play()
+        
+      
+        switch(bagCursorPositions.current){
+        case 1: {
+            lockBagArrow=true;
+            arrow3.position.y+=60;
+            bagCursorPositions.current++;
+            bagCursorPositions.text="Used to destroy Cyrus on the tennis court."
+            return;
+        }
+
+        case 2: {
+            lockBagArrow=true;
+            arrow3.position.y+=60;
+            bagCursorPositions.current++;
+            bagCursorPositions.text="Um hello.. It says MYSTERIOUS. That means you will NEVER know what it is."
+            return;
+        }
+
+        case 3: {
+            lockBagArrow=true;
+            arrow3.position.y+=60;
+            bagCursorPositions.current++;
+            bagCursorPositions.text="It's okay. We know you're fat."
+            return;
+        }
+
+        case 4: {
+            lockBagArrow=true;
+            arrow3.position.y+=60;
+            bagCursorPositions.current++;
+            bagCursorPositions.text="Dont worry, its the fancy kind."
+            return;
+        }
+
+        case 5: {
+            lockBagArrow=true;
+            arrow3.position.y+=60;
+            bagCursorPositions.current++;
+            bagCursorPositions.text="For creating watercolor paintings."
+            return;
+        } case 6: {
+            lockBagArrow=true;
+            arrow3.position.y-=300;
+            bagCursorPositions.current=1;
+            bagCursorPositions.text="You're a master artist, of course you have these."
+        }
+        
+        }
+    }
+
+    if((keys.w.pressed) && !lockBagArrow){
+        clickSound.play()
+        switch(bagCursorPositions.current){
+        case 1: {
+            lockBagArrow=true;
+            arrow3.position.y+=300;
+            bagCursorPositions.current=6;
+            bagCursorPositions.text="For creating watercolor paintings."
+            console.log("BRUIH")
+            return;
+        }
+
+        case 2: {
+            lockBagArrow=true;
+            arrow3.position.y-=60;
+            bagCursorPositions.current--;
+            bagCursorPositions.text="You're a master artist, of course you have these."
+            return;
+        }
+
+        case 3: {
+            lockBagArrow=true;
+            arrow3.position.y-=60;
+            bagCursorPositions.current--;
+            bagCursorPositions.text="Used to destroy Cyrus on the tennis court."
+            return;
+        }
+
+        case 4: {
+            lockBagArrow=true;
+            arrow3.position.y-=60;
+            bagCursorPositions.current--;
+            bagCursorPositions.text="Um hello.. It says MYSTERIOUS. That means you will NEVER know what it is."
+            return;
+        }
+
+        case 5: {
+            lockBagArrow=true;
+            arrow3.position.y-=60;
+            bagCursorPositions.current--;
+            bagCursorPositions.text="It's okay. We know you're fat."
+            return;
+        }
+
+        case 6:{
+            lockBagArrow=true;
+            arrow3.position.y-=60;
+            bagCursorPositions.current--;
+            bagCursorPositions.text="Dont worry, its the fancy kind."
+            return;
+        }
+        
+        }
+    }
+
+    if(keys.x.pressed){
+        lockBattleMenu=true;
+        battleStage=5;
+    }
+}
 
 if(keys.z.pressed == false){
     lockBattleMenu=false;
 }
 
 if(keys.z.pressed && !typing){
+    if(endGame==true){
+        gsap.to("#overlay", {
+            opacity: 1,
+            duration: 1,
+            onComplete(){
+                window.cancelAnimationFrame(animateID)
+                document.getElementById("game-container").style.display='none';
+                document.getElementById("ending").style.display='block';
+                return;
+            }
+        })
+        
+    
+
+    
+    }
+    console.log("STAGE: " + battleStage)
     switch (battleStage){
         case 1: {
             if(!graceReleased){
@@ -938,33 +1388,179 @@ if(keys.z.pressed && !typing){
             break;
         }
         case 2: {
+            clickSound.play()
             startTypingEffect("What will GRACE do?")
             battleStage++;
             break;
         }
         case 3: {
-            console.log("HII")
+            clickSound.play()
                 if(!lockBattleMenu){
                     if(cursorPositions.current == 4){
                         battleStage++;
                         startTypingEffect("You can't run away silly!")
-                    } else if(cursorPositions.current == 2){
+                        
+                    } else if(cursorPositions.current == 3){
                         battleStage = 5;
+                      
+                    } else if(cursorPositions.current == 1){
+                        lockBattleMenu = true;
+                        battleStage = 6;
+                       
                     }
+                else if(cursorPositions.current==2){
+                    battleStage = 8;
+                   
                 }
+            }
             break;
         }
         case 4: {
+            clickSound.play()
                 lockBattleMenu=true;
                 currentText="What will GRACE do?"
                 battleStage--;
             break;
         }
+        case 6: {
+            clickSound.play()
+            if(!lockBattleMenu){
+                if(battlePositions.current==1 && battlePositions.pp[0] > 0){
+                    if(dialogueCounter == 0){
+                        startTypingEffect("GRACE used EXAMINE!")
+                        battleStage++;
+                        dialogueCounter++;
+                        battlePositions.pp[0]=0;
+                    }
+                } else if(battlePositions.current==3 && battlePositions.pp[2] > 0){
+                    if(dialogueCounter==0){
+                        startTypingEffect("GRACE used SHOW CYRUS!")
+                        battleStage++;
+                        dialogueCounter++;
+                        battlePositions.pp[2]=0;
+                    }
+                } else if(battlePositions.current==4 && battlePositions.pp[3] > 0){
+                    if(dialogueCounter==0){
+                        startTypingEffect("GRACE used TWERK'O LISA!")
+                        battleStage++;
+                        dialogueCounter++;
+                        battlePositions.pp[3]=0;
+                    }
+                } else if(battlePositions.current==2 && battlePositions.pp[1] > 0){
+                    if(battlePositions.pp[0] < 1 && battlePositions.pp[2] < 1 && battlePositions.pp[3] < 1){
+                    if(dialogueCounter==0){
+                        startTypingEffect("GRACE used PAINT!")
+                        battleStage++;
+                        dialogueCounter++;
+                        battlePositions.pp[1]=0;
+                    }
+                } else {
+                    startTypingEffect("Use your other moves first!")
+                    lockBattleMenu=true;
+                    battleStage++;
+                }
+                }
+            }
+                break;
+        }
+        case 7: {
+            clickSound.play()
+            if(battlePositions.current==1){
+                if(dialogueCounter == 1){
+                    startTypingEffect("It's the Mona Lisa! A piece Da Vinci created to rival artist Grace Wang.")
+                    dialogueCounter++;
+                } else if (dialogueCounter == 2){
+                    startTypingEffect("It's not very effective...")
+                    dialogueCounter = 0;
+                } else {
+                    lockBattleMenu=true;
+                    battleStage--;
+                }
+            } else if(battlePositions.current==3){
+                if(dialogueCounter == 1){
+                    startTypingEffect("❝Hi pookie check this weird ass Mona Lisa out.❞")
+                    dialogueCounter++;
+                } else if (dialogueCounter == 2){
+                    startTypingEffect("It's not very effective...")
+                    dialogueCounter = 0;
+                } else {
+                    lockBattleMenu=true;
+                    battleStage--;
+                }
+            } else if(battlePositions.current==4){
+                if(dialogueCounter == 1){
+                    startTypingEffect("Grace starts twerking...")
+                    dialogueCounter++;
+                } else if (dialogueCounter==2){
+                    startTypingEffect("The Mona Lisa twerks back...")
+                    dialogueCounter++;
+                } else if (dialogueCounter==3){
+                    startTypingEffect("It's not very effective...")
+                    dialogueCounter++;
+                } else if(dialogueCounter==4){
+                    startTypingEffect("You've been out twerked.")
+                    dialogueCounter=0;
+                } else {
+                    lockBattleMenu=true;
+                    battleStage--;
+                }
+            } else if(battlePositions.current==2){
+                 if(dialogueCounter == 1){
+                    startTypingEffect("Grace brushes ferociously using acrylic paint.")
+                    dialogueCounter++;
+                } else if (dialogueCounter==2){
+                    startTypingEffect("Holy shit dude, your brushing skills are next level.")
+                    dialogueCounter++;
+                } else if (dialogueCounter==3){
+                    startTypingEffect("Thanks dude, I've been on the art class grind.")
+                    dialogueCounter++;
+                } else if(dialogueCounter==4){
+                    startTypingEffect("It's super effective!")
+                    dialogueCounter++;
+                } else if(dialogueCounter==5){
+                    startTypingEffect("MONA LISA has fainted.")
+                    drainHP=true;
+                    attackSound.play()
+                    dialogueCounter=0;
+                    let intensity = 3; // Adjust intensity of the shake
+                    let duration = 500; // Shake duration in milliseconds
+                    let startTime = Date.now();
+                
+                    function shake() {
+                      let elapsed = Date.now() - startTime;
+                      if (elapsed > duration) {
+                        canvas.style.transform = "translate(0px, 0px)";
+                        return;
+                      }
+                
+                      let offsetX = (Math.random() * 2 - 1) * intensity;
+                      let offsetY = (Math.random() * 2 - 1) * intensity;
+                      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                
+                      requestAnimationFrame(shake);
+                    }
+                
+                    shake();
+                    battleLoop.pause()
+                    endGame=true;
+                } else {
+                    lockBattleMenu=true;
+                    battleStage--;
+                }
+            }
+                
+        } case 8: {
+            clickSound.play()
+            console.log("THIS IS CASE 8")
+            return;
+        }
     }
 }
 
 if(keys.x.pressed && !typing){
-    if(battleStage == 5) {
+    if(battleStage == 5 || battleStage == 6) {
+        clickSound.play()
+        currentText="What will GRACE do?"
         battleStage=3;
     }
 }
@@ -1105,7 +1701,6 @@ function startTypingEffect(dialogue, onComplete) {
 
     let lastKey = ''
     window.addEventListener('keydown', (e) => {
-
         switch (e.key) {
             case 'w': 
                 keys.w.pressed = true
@@ -1198,12 +1793,19 @@ let t = setInterval(function () {
 remove this
 */
 
-runGame();
 
+initializeSounds()
 
-/*window.addEventListener('keydown', () => {
+if(loopType==0){
+window.addEventListener('keydown', () => {
     document.getElementById("instructions").style.display = "none";
     document.getElementById("game-container").style.display = "flex"
     runGame();
-}, {once: true})*/
+    levelSound.play()
+}, {once: true})
+} else {
+    document.getElementById("instructions").style.display = "none";
+    document.getElementById("game-container").style.display = "flex"
+    runGame();
+}
 
